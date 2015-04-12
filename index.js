@@ -3,8 +3,14 @@
 var express = require('express');
 var app = express();
 var log4js = require('log4js');
-var logger = log4js.getLogger();
+var logger = null;
 var bodyParser = require('body-parser');
+
+if (process.env.NODE_ENV !== 'test') {
+	log4js.loadAppender('console');
+	log4js.addAppender(log4js.appenders.console(), 'logger');
+	logger = log4js.getLogger('logger');
+} 
 
 app.use(bodyParser.json());
 app.use(bodyParser.urlencoded({ extended: true }));
@@ -12,7 +18,6 @@ app.use(bodyParser.urlencoded({ extended: true }));
 app.post('/api/turtle_message', function(req, res){
 	logger.debug('Got a turtle message!');
 	var message = fix_cc_message(req.body);
-	console.log(message);
 	res.send({status: "ok"});
 });
 
@@ -35,3 +40,5 @@ function fix_cc_message(message) {
 	}
 	return data;
 }
+
+exports.fix_cc_message = fix_cc_message;
