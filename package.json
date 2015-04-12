@@ -17,6 +17,9 @@
   },
   "homepage": "https://github.com/muiro/ninja_turtes",
   "dependencies": {
-    "express": "^4.12.3"
+    "chai": "^2.2.0",
+    "express": "^4.12.3",
+    "mocha": "^2.2.4",
+    "supertest": "^0.15.0"
   }
 }
