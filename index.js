@@ -12,6 +12,9 @@ app.use(bodyParser.urlencoded({ extended: true }));
 app.post('/api/turtle_message', function(req, res){
 	logger.debug('Got a turtle message!');
 	logger.debug(req.body);
+	logger.debug(req.body.uuid);
+	logger.debug(JSON.parse(req.body));
+	logger.debug(JSON.parse(req.body).uuid);
 	res.send({status: "ok"});
 });
 
