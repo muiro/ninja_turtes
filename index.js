@@ -5,11 +5,14 @@ var app = express();
 var log4js = require('log4js');
 var logger = log4js.getLogger();
 var bodyParser = require('body-parser');
-var jsonParser = bodyParser.json();
 
-app.post('/api/turtle_message', jsonParser, function(req, res){
+app.use(bodyParser.json());
+app.use(bodyParser.urlencoded({ extended: true }));
+
+app.post('/api/turtle_message', function(req, res){
 	logger.debug('Got a turtle message!');
 	logger.debug(req.body);
+	res.send({status: "ok"});
 });
 
 app.get('/test', function(req, res){
