@@ -12,6 +12,11 @@ app.post('/api/turtle_message', jsonParser, function(req, res){
 	logger.debug(req.body);
 });
 
+app.get('/test', function(req, res){
+	logger.debug('Got /test request');
+	res.send("test");
+});
+
 var server = app.listen(3000, function(){
 	var host = server.address().address;
 	var port = server.address().port;
