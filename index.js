@@ -11,10 +11,8 @@ app.use(bodyParser.urlencoded({ extended: true }));
 
 app.post('/api/turtle_message', function(req, res){
 	logger.debug('Got a turtle message!');
-	logger.debug(req.body);
-	logger.debug(req.body.uuid);
-	logger.debug(JSON.parse(req.body));
-	logger.debug(JSON.parse(req.body).uuid);
+	var message = fix_cc_message(req.body);
+	console.log(message);
 	res.send({status: "ok"});
 });
 
@@ -29,3 +27,11 @@ var server = app.listen(3000, function(){
 
 	logger.debug('ninja_turtles server listening at http://%s:%s', host, port);
 });
+
+function fix_cc_message(message) {
+	var data = null;
+	for(var key in message) {
+		data = JSON.parse(key);
+	}
+	return data;
+}
