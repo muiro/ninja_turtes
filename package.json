@@ -1,0 +1,22 @@
+{
+  "name": "ninja_turtes",
+  "version": "1.0.0",
+  "description": "nodejs server for computercraft http communication",
+  "main": "index.js",
+  "scripts": {
+    "test": "echo \"Error: no test specified\" && exit 1"
+  },
+  "repository": {
+    "type": "git",
+    "url": "https://github.com/muiro/ninja_turtes.git"
+  },
+  "author": "muiro",
+  "license": "MIT",
+  "bugs": {
+    "url": "https://github.com/muiro/ninja_turtes/issues"
+  },
+  "homepage": "https://github.com/muiro/ninja_turtes",
+  "dependencies": {
+    "express": "^4.12.3"
+  }
+}
