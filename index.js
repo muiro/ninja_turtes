@@ -40,9 +40,21 @@ app.get('/api/message/:id?', function(req, res){
 	}
 });
 
-app.get('/test', function(req, res){
-	logger.debug('Got /test request');
-	res.send("test");
+app.get('/api/messages', function(req, res){
+	try {
+		logger.debug('Received a messages get request!');
+		var number = req.query.number;
+		if (number) {
+			var this_messages = get_messages(number);
+			res.send(this_messages);
+		} else {
+			var this_messages = get_messages();
+			res.send(this_messages);
+		}
+	} catch (error) {
+		logger.error(error);
+		res.send({status: 'error'});
+	}
 });
 
 var server = app.listen(3000, function(){
@@ -78,9 +90,17 @@ function purge_messages() {
 	return true;
 }
 
-function get_messages() {
+function get_messages(number) {
 	try {
-		return messages.slice(0);
+		if (number == null || number == undefined) {
+			return messages.slice(0);
+		} else {
+			var this_messages = messages.slice(0);
+			while (this_messages.length > number) {
+				this_messages.shift();
+			}
+			return this_messages;
+		}
 	} catch (error) {
 		logger.error(error);
 		return null;

@@ -71,10 +71,41 @@ describe("ninja_turtles", function(){
 	});
 
 	describe("#get_messages()", function(){
-		it("should return the message queue", function(done){
+		it("should return all messages from the queue", function(done){
 			app.purge_messages();
-			var messages = app.get_messages();
-			expect(messages).to.deep.equal([]);
+			var messages = [];
+			for (var i = 0; i < 20; i++) {
+				var message = {
+					uuid: UUID.v4(),
+					message: "/messages GET test message " + i
+				};
+				app.log_message(message);
+				messages.push(message);
+			}
+
+			var result = app.get_messages();
+			expect(result).to.deep.equal(messages);
+			done();
+		});
+
+		it("should return a certain number of messages if specified", function(done){
+			app.purge_messages();
+			var messages = [];
+			for (var i = 0; i < 20; i++) {
+				var message = {
+					uuid: UUID.v4(),
+					message: "/messages GET test message " + i
+				};
+				app.log_message(message);
+				messages.push(message);
+			}
+
+			while (messages.length > 5) {
+				messages.shift();
+			}
+
+			var result = app.get_messages(5);
+			expect(result).to.deep.equal(messages);
 			done();
 		});
 	});
@@ -121,104 +152,158 @@ describe("ninja_turtles", function(){
 	});
 
 	describe("/api", function(){
-		describe("/message POST", function(){
-			it("should accept a json message and return status: ok", function(done){
-				var message = {
-					'{"message":"test message"}': ''
-				};
-				request("http://localhost:3000")
-				.post("/api/message")
-				.send(message)
-				.end(function(err, res){
-					if (err) return done(err);
-					expect(res.body).to.deep.equal({status: 'ok'});
-					done();
+		describe("/message", function(){
+			describe("POST", function(){
+				it("should accept a json message and return status: ok", function(done){
+					var message = {
+						'{"message":"test message"}': ''
+					};
+					request("http://localhost:3000")
+					.post("/api/message")
+					.send(message)
+					.end(function(err, res){
+						if (err) return done(err);
+						expect(res.body).to.deep.equal({status: 'ok'});
+						done();
+					});
+				});
+
+				it("should return status: error if message is not json or it can't be parsed", function(done){
+					var message = {
+						'{"message":"test message"': ''
+					};
+					request("http://localhost:3000")
+					.post("/api/message")
+					.send(message)
+					.end(function(err, res){
+						if (err) return done(err);
+						expect(res.body).to.deep.equal({status: 'error'});
+						done();
+					});
+				});
+
+				it("should add new messages to the message queue", function(done){
+					app.purge_messages();
+					var message = {
+						'{"message":"test message2"}': ''
+					};
+					request("http://localhost:3000")
+					.post("/api/message")
+					.send(message)
+					.end(function(err, res){
+						if (err) return done(err);
+						expect(app.get_messages()).to.deep.equal([{message: "test message2"}]);
+						done();
+					});
 				});
 			});
 
-			it("should return status: error if message is not json or it can't be parsed", function(done){
-				var message = {
-					'{"message":"test message"': ''
-				};
-				request("http://localhost:3000")
-				.post("/api/message")
-				.send(message)
-				.end(function(err, res){
-					if (err) return done(err);
-					expect(res.body).to.deep.equal({status: 'error'});
-					done();
+			describe("GET", function(){
+				it("should return a message by the specified uuid", function(done){
+					app.purge_messages();
+					var uuid = UUID.v4();
+					var message = {
+						uuid: uuid,
+						message: "/message/:id GET test message"
+					};
+					app.log_message(message);
+					request("http://localhost:3000")
+					.get("/api/message/" + uuid)
+					.send()
+					.end(function(err, res){
+						if (err) return done(err);
+						expect(res.body).to.deep.equal(message);
+						done();
+					});
 				});
-			});
 
-			it("should add new messages to the message queue", function(done){
-				app.purge_messages();
-				var message = {
-					'{"message":"test message2"}': ''
-				};
-				request("http://localhost:3000")
-				.post("/api/message")
-				.send(message)
-				.end(function(err, res){
-					if (err) return done(err);
-					expect(app.get_messages()).to.deep.equal([{message: "test message2"}]);
-					done();
+				it("should return an error if the message doesn't exist in the queue", function(done){
+					app.purge_messages();
+					var uuid = UUID.v4();
+					request("http://localhost:3000")
+					.get("/api/message/" + uuid)
+					.send()
+					.end(function(err, res){
+						if (err) return done(err);
+						expect(res.body).to.deep.equal({status: 'error'});
+						done();
+					});
+				});
+
+				it("should return the most recent message if no uuid is specified", function(done){
+					app.purge_messages();
+					var uuid = UUID.v4();
+					var message = {
+						uuid: uuid,
+						message: "/message/:id GET test message 1"
+					};
+					var uuid2 = UUID.v4();
+					var message2 = {
+						uuid: uuid2,
+						message: "/message/:id GET test message 2"
+					};
+					app.log_message(message);
+					app.log_message(message2);
+					request("http://localhost:3000")
+					.get("/api/message")
+					.send()
+					.end(function(err, res){
+						if (err) return done(err);
+						expect(res.body).to.deep.equal(message2);
+						done();
+					});
 				});
 			});
 		});
 
-		describe("/message/:id GET", function(){
-			it("should return a message by the specified uuid", function(done){
-				app.purge_messages();
-				var uuid = UUID.v4();
-				var message = {
-					uuid: uuid,
-					message: "/message/:id GET test message"
-				};
-				app.log_message(message);
-				request("http://localhost:3000")
-				.get("/api/message/" + uuid)
-				.send()
-				.end(function(err, res){
-					if (err) return done(err);
-					expect(res.body).to.deep.equal(message);
-					done();
-				});
-			});
+		describe("/messages", function(){
+			describe("GET", function(){
+				it("should return all messages from the queue if no amount is specified", function(done){
+					app.purge_messages();
+					var messages = [];
+					for (var i = 0; i < 20; i++) {
+						var message = {
+							uuid: UUID.v4(),
+							message: "/messages GET test message " + i
+						};
+						app.log_message(message);
+						messages.push(message);
+					}
 
-			it("should return an error if the message doesn't exist in the queue", function(done){
-				app.purge_messages();
-				var uuid = UUID.v4();
-				request("http://localhost:3000")
-				.get("/api/message/" + uuid)
-				.send()
-				.end(function(err, res){
-					if (err) return done(err);
-					expect(res.body).to.deep.equal({status: 'error'});
-					done();
+					request("http://localhost:3000")
+					.get("/api/messages")
+					.send()
+					.end(function(err, res){
+						if (err) return done(err);
+						expect(res.body).to.deep.equal(messages);
+						done();
+					});
 				});
-			});
 
-			it("should return the most recent message if no uuid is specified", function(done){
-				app.purge_messages();
-				var uuid = UUID.v4();
-				var message = {
-					uuid: uuid,
-					message: "/message/:id GET test message 1"
-				};
-				var uuid2 = UUID.v4();
-				var message2 = {
-					uuid: uuid2,
-					message: "/message/:id GET test message 2"
-				};
-				app.log_message(message);
-				app.log_message(message2);
-				request("http://localhost:3000")
-				.get("/api/message/")
-				.send()
-				.end(function(err, res){
-					if (err) return done(err);
-					expect(res.body).to.deep.equal(message2);
-					done();
+				it("should return a certain number of messages if one is specified", function(done){
+					app.purge_messages();
+					var messages = [];
+					for (var i = 0; i < 20; i++) {
+						var message = {
+							uuid: UUID.v4(),
+							message: "/messages GET test message " + i
+						};
+						app.log_message(message);
+						messages.push(message);
+					}
+
+					while (messages.length > 5) {
+						messages.shift();
+					}
+
+					request("http://localhost:3000")
+					.get("/api/messages?number=5")
+					.send()
+					.end(function(err, res){
+						if (err) return done(err);
+						expect(res.body).to.deep.equal(messages);
+						done();
+					});
 				});
 			});
 		});
