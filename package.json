@@ -4,7 +4,8 @@
   "description": "nodejs server for computercraft http communication",
   "main": "index.js",
   "scripts": {
-    "test": "mocha"
+    "test": "mocha",
+    "start": "nodemon"
   },
   "repository": {
     "type": "git",
@@ -22,6 +23,7 @@
     "express": "^4.12.3",
     "log4js": "^0.6.22",
     "mocha": "^2.2.4",
+    "node-uuid": "^1.4.3",
     "supertest": "^0.15.0"
   }
 }
