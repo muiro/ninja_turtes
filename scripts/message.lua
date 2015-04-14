@@ -11,7 +11,7 @@ function send(message)
 	data.turtle_id = os.computerID()
 	
 	local data_string = json.encode(data)
-	local response = http.post("http://localhost:3000/api/turtle_message", data_string)
+	local response = http.post("http://localhost:3000/api/message_message", data_string)
 
 	print(response.readAll())
 end
