@@ -117,7 +117,7 @@ function purge_messages() {
 	return true;
 }
 
-function get_messages(number) {
+function get_messages(number, computer_id) {
 	try {
 		if (number == null || number == undefined) {
 			return messages.slice(0);
@@ -139,7 +139,30 @@ function get_message(uuid, computer_id) {
 		var this_messages = messages;
 		var this_read_messages = read_messages;
 		if (uuid == null || uuid == undefined) {
-			return this_messages[this_messages.length -1];
+			if (computer_id != null && computer_id != undefined) {
+				var unread_messages = this_messages.filter(function(element, index){
+					var read = this_read_messages[index].read;
+					if (read.indexOf(computer_id) == -1) {
+						return true;
+					} else {
+						return false;
+					}
+				});
+
+				if (unread_messages.length == 0) {
+					return null;
+				}
+
+				var message = unread_messages[0];
+				var uuid = message.uuid;
+				var currently_read = this_read_messages[this_read_messages.map(function(element){return element.uuid;}).indexOf(uuid)].read;
+				currently_read.push(computer_id);
+				this_read_messages[this_read_messages.map(function(element){return element.uuid;}).indexOf(uuid)].read = currently_read;
+				return message;
+
+			} else {
+				return this_messages[this_messages.length -1];
+			}
 		} else {
 			if (this_messages.map(function(element){return element.uuid;}).indexOf(uuid) != -1) {
 				if (computer_id != null && computer_id != undefined) {
