@@ -50,22 +50,142 @@ describe("ninja_turtles", function(){
 			done();
 		});
 
-		it("should return the most recent message if no uuid is passed", function(done){
+		// it("should return the most recent message if no uuid is passed", function(done){
+		// 	app.purge_messages();
+		// 	var uuid = UUID.v4();
+		// 	var uuid2 = UUID.v4();
+		// 	var message = {
+		// 		uuid: uuid,
+		// 		message: "#get_message(uuid) test message 1"
+		// 	};
+		// 	var message2 = {
+		// 		uuid: uuid2,
+		// 		message: "#get_message(uuid) test message 2"
+		// 	};
+		// 	app.log_message(message);
+		// 	app.log_message(message2);
+		// 	var result = app.get_message();
+		// 	expect(result).to.deep.equal(message2);
+		// 	done();
+		// });
+
+		it("should mark a message as read when a uuid is passed", function(done){
+			app.purge_messages();
+			var uuid = UUID.v4();
+			var message = {
+				uuid: uuid,
+				computer_label: 'Test',
+				computer_id: 11,
+				message: "#get_message() test message"
+			};
+			app.log_message(message);
+			app.get_message(uuid, 12);//read as 12
+			var result = app.get_read();
+			expect(result).to.deep.equal([{uuid: uuid, read: [11, 12]}]);
+			done();
+		});
+
+		it("should return the oldest unread message if no uuid is passed", function(done){
 			app.purge_messages();
 			var uuid = UUID.v4();
 			var uuid2 = UUID.v4();
+			var message11 = {
+				uuid: uuid,
+				computer_label: 'Test 11',
+				computer_id: 11,
+				message: "#get_message() test message 11"
+			};
+			var message12 = {
+				uuid: uuid2,
+				computer_label: 'Test 12',
+				computer_id: 12,
+				message: "#get_message() test message 12"
+			};
+			app.log_message(message11);
+			app.log_message(message12);
+			var result = app.get_message();//read as 12
+			expect(result).to.deep.equal(message11);
+			done();
+		});
+
+		it("should return null if there are no unread messages if no uuid is passed", function(done){
+			app.purge_messages();
+			var result = app.get_message();
+			expect(result).to.equal(null);
+			done();
+		});
+
+		it("should mark the message as read by the requesting computer", function(done){
+			app.purge_messages();
+			var uuid = UUID.v4();
 			var message = {
 				uuid: uuid,
-				message: "#get_message(uuid) test message 1"
-			};
-			var message2 = {
-				uuid: uuid2,
-				message: "#get_message(uuid) test message 2"
+				computer_label: 'Test',
+				computer_id: 11,
+				message: "#get_message() test message"
 			};
 			app.log_message(message);
-			app.log_message(message2);
-			var result = app.get_message();
-			expect(result).to.deep.equal(message2);
+			app.get_message();//read as 12
+			var result = app.get_read();
+			expect(result).to.deep.equal([{uuid: uuid, read: [11, 12]}]);
+			done();
+		});
+
+		it("should mark the message as read by additional computers that read it", function(done){
+			app.purge_messages();
+			var uuid = UUID.v4();
+			var message = {
+				uuid: uuid,
+				computer_label: 'Test',
+				computer_id: 11,
+				message: "#get_message() test message"
+			};
+			app.log_message(message);
+			app.get_message();//read as 12
+			var result = app.get_read();
+			expect(result).to.deep.equal([{uuid: uuid, read: [11, 12]}]);
+			done();
+		});
+
+		it("should not re-add a reader that already exists on a message's read queue", function(done){
+			app.purge_messages();
+			var uuid = UUID.v4();
+			var message = {
+				uuid: uuid,
+				computer_label: 'Test',
+				computer_id: 11,
+				message: "#get_message() test message"
+			};
+			app.log_message(message);
+			app.get_message();//read as 12
+			app.get_message(uuid);//read as 12
+			var result = app.get_read();
+			expect(result).to.deep.equal([{uuid: uuid, read: [11, 12]}]);
+			done();
+		});
+
+		it("should not mark a message as read if no computer_id is passed", function(done){
+			app.purge_messages();
+			var uuid = UUID.v4();
+			var message = {
+				uuid: uuid,
+				computer_label: 'Test',
+				computer_id: 11,
+				message: "#get_message() test message"
+			};
+			app.log_message(message);
+			app.get_message(uuid);
+			var result = app.get_read();
+			expect(result).to.deep.equal([{uuid: uuid, read: [11]}]);
+			done();
+
+		});
+	});
+
+	describe("#get_read()", function(){
+		it("should return the read queue (an array)", function(done){
+			var response = app.get_read();
+			expect(response).to.be.an('array');
 			done();
 		});
 	});
@@ -108,6 +228,8 @@ describe("ninja_turtles", function(){
 			expect(result).to.deep.equal(messages);
 			done();
 		});
+
+		it("should mark the messages as read by the requesting computer");
 	});
 
 	describe("#log_message()", function(){
@@ -139,15 +261,64 @@ describe("ninja_turtles", function(){
 			expect(app.get_messages()).to.deep.equal(messages);
 			done();
 		});
+
+		it("should instantiate the read_messages[] element for the message", function(){
+			app.purge_messages();
+			var uuid = UUID.v4();
+			var message = {
+				uuid: uuid,
+				computer_id: 11,
+				computer_label: 'Test',
+				message: 'Test message'
+			};
+			app.log_message(message);
+			expect(app.get_read()).to.have.length(1);
+		});
+
+		it("should only keep " + app.message_limit + " messages in the read_messages[] array", function(){
+			app.purge_messages();
+			for (var i = 0; i < app.message_limit + 2; i++) {
+				var uuid = UUID.v4();
+				var message = {
+					uuid: uuid,
+					computer_id: 11,
+					computer_label: 'Test',
+					message: 'Test message'
+				};
+				app.log_message(message);
+			}
+			var result = app.get_read();
+			expect(result).to.have.length(100);
+		});
+
+		it("should mark the message as read by the posting computer", function(){
+			app.purge_messages();
+			var uuid = UUID.v4();
+			var message = {
+				uuid: uuid,
+				computer_id: 11,
+				computer_label: 'Test',
+				message: 'Test message'
+			};
+			app.log_message(message);
+			expect(app.get_read()).to.deep.equal([{uuid: uuid, read: [11]}]);
+		});
 	});
 
 	describe("#purge_messages()", function(){
-		it("should set blank out the messages queue", function(done){
+		it("should blank out the messages queue", function(done){
 			app.purge_messages();
 			app.log_message("test");
 			app.purge_messages();
 			expect(app.get_messages()).to.deep.equal([]);
 			done();
+		});
+
+		it("should blank out the read messages queue", function(){
+			app.purge_messages();
+			app.log_message("test");
+			app.purge_messages();
+			expect(app.get_read()).to.deep.equal([]);
 		});
 	});
 
@@ -196,6 +367,29 @@ describe("ninja_turtles", function(){
 						done();
 					});
 				});
+
+				it("should mark the message as read by the posting computer", function(done){
+					app.purge_messages();
+					var uuid = UUID.v4();
+					var message = {
+						uuid: uuid,
+						computer_label: 'Test',
+						computer_id: 11,
+						message: 'Test message'
+					};
+					message = make_cc_message(message);
+					request("http://localhost:3000")
+					.post("/api/message")
+					.send(message)
+					.end(function(err, res){
+						if (err) return done(err);
+						expect(app.get_read()).to.deep.equal([{uuid: uuid, read:[11]}]);
+						done();
+					});
+				});
+
+				it("should check for completeness of required fields in the request (comuter_id, computer_label, uuid, message) " + 
+					" and return an error if not all are present");
 			});
 
 			describe("GET", function(){
@@ -230,29 +424,36 @@ describe("ninja_turtles", function(){
 					});
 				});
 
-				it("should return the most recent message if no uuid is specified", function(done){
-					app.purge_messages();
-					var uuid = UUID.v4();
-					var message = {
-						uuid: uuid,
-						message: "/message/:id GET test message 1"
-					};
-					var uuid2 = UUID.v4();
-					var message2 = {
-						uuid: uuid2,
-						message: "/message/:id GET test message 2"
-					};
-					app.log_message(message);
-					app.log_message(message2);
-					request("http://localhost:3000")
-					.get("/api/message")
-					.send()
-					.end(function(err, res){
-						if (err) return done(err);
-						expect(res.body).to.deep.equal(message2);
-						done();
-					});
-				});
+				// it("should return the most recent message if no uuid is specified", function(done){
+				// 	app.purge_messages();
+				// 	var uuid = UUID.v4();
+				// 	var message = {
+				// 		uuid: uuid,
+				// 		message: "/message/:id GET test message 1"
+				// 	};
+				// 	var uuid2 = UUID.v4();
+				// 	var message2 = {
+				// 		uuid: uuid2,
+				// 		message: "/message/:id GET test message 2"
+				// 	};
+				// 	app.log_message(message);
+				// 	app.log_message(message2);
+				// 	request("http://localhost:3000")
+				// 	.get("/api/message")
+				// 	.send()
+				// 	.end(function(err, res){
+				// 		if (err) return done(err);
+				// 		expect(res.body).to.deep.equal(message2);
+				// 		done();
+				// 	});
+				// });
+
+				it("should accept a computer_id in the request object");
+				it("should return the oldest unread message for the computer id if no uuid specified");
+				it("should return {status: 'ok'} when there are no unread messages if no uuid is specified");
+				it("should mark the message as read by the requesting computer");
+				it("should check for completeness of required fields in the request (comuter_id) " + 
+					" and return an error if not all are present");
 			});
 		});
 
@@ -305,7 +506,35 @@ describe("ninja_turtles", function(){
 						done();
 					});
 				});
+
+				it("should mark the messages as ready by the requesting computer");
+
+				it("should check for completeness of required fields in the request (comuter_id) " + 
+					" and return an error if not all are present");
+			});
+		});
+
+		describe("/time", function(){
+			describe("GET", function(){
+				it("should return a time value in UTC", function(done){
+					request("http://localhost:3000")
+					.get("/api/time")
+					.send()
+					.end(function(err, res){
+						if (err) return done(err);
+						expect(res.text).to.match(/^[0-9]{4}-[0-9]{2}-[0-9]{2}T[0-9]{2}:[0-9]{2}:[0-9]{2}/);
+						done();
+					});
+				});
 			});
 		});
 	});
 });
+
+
+function make_cc_message(object) {
+	var string = JSON.stringify(object);
+	var new_object = {};
+	new_object[string] = '';
+	return new_object;
+}
