@@ -259,6 +259,8 @@ describe("ninja_turtles", function(){
 			expect(result).to.deep.equal([message11]);
 			done();
 		});
+
+		it("should return fewer than the number of specified messages if number and computer id passed but there exist fewer unread messages than specified");
 	});
 
 	describe("#log_message()", function(){
