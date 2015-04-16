@@ -10,9 +10,9 @@ function send(message)
 	data.computer_name = os.computerLabel()
 	data.computer_id = os.computerID()
 
-	local time = message.time()
+	local time2 = time()
 
-	data.time = time
+	data.time = time2
 
 	local data_string = json.encode(data)
 	local response = http.post("http://localhost:3000/api/message", data_string)
