@@ -179,6 +179,7 @@ describe("ninja_turtles", function(){
 			for (var i = 0; i < 20; i++) {
 				var message = {
 					uuid: UUID.v4(),
+					computer_id: 11,
 					message: "/messages GET test message " + i
 				};
 				app.log_message(message);

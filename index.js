@@ -119,14 +119,57 @@ function purge_messages() {
 
 function get_messages(number, computer_id) {
 	try {
-		if (number == null || number == undefined) {
-			return messages.slice(0);
+		// if (number == null || number == undefined) {
+			// return messages.slice(0);
+		// } else {
+			// var this_messages = messages.slice(0);
+			// while (this_messages.length > number) {
+			// 	this_messages.shift();
+			// }
+			// return this_messages;
+		// }
+		if (computer_id != null && computer_id != undefined) {
+			var unread_messages = messages.filter(function(element, index){
+				var read = read_messages[index].read;
+				if (read.indexOf(computer_id) == -1) {
+					return true;
+				} else {
+					return false;
+				}
+			});
+
+			var mark_messages_read = function(this_messages){
+				for (var i = 0; i < unread_messages.length; i++) {
+					var currently_read =read_messages[read_messages.map(function(element){return element.uuid;}).indexOf(unread_messages[i].uuid)].read;
+					if (currently_read.indexOf(computer_id) == -1) {
+						currently_read.push(computer_id);
+						read_messages[read_messages.map(function(element){return element.uuid;}).indexOf(unread_messages[i].uuid)].read = currently_read;
+					}
+				}
+			};
+
+			if (unread_messages.length == 0) {
+				return null;
+			} else if (number != null && number != undefined) {
+				while (unread_messages.length > number) {
+					unread_messages.shift();
+				}
+				mark_messages_read(unread_messages);
+				return unread_messages;
+			} else {
+				mark_messages_read(unread_messages);
+				return unread_messages;
+			}
 		} else {
 			var this_messages = messages.slice(0);
-			while (this_messages.length > number) {
-				this_messages.shift();
+			if (number != null && number != undefined) {
+				while (this_messages.length > number) {
+					this_messages.shift();
+				}
+				return this_messages;
+			} else {
+				return this_messages;
 			}
-			return this_messages;
 		}
 	} catch (error) {
 		logger.error(error);
