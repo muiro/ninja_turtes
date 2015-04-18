@@ -1,5 +1,5 @@
 {
-  "name": "ninja_turtes",
+  "name": "ninja_turtles",
   "version": "1.0.0",
   "description": "nodejs server for computercraft http communication",
   "main": "index.js",
@@ -9,14 +9,14 @@
   },
   "repository": {
     "type": "git",
-    "url": "https://github.com/muiro/ninja_turtes.git"
+    "url": "https://github.com/muiro/ninja_turtles.git"
   },
   "author": "muiro",
   "license": "MIT",
   "bugs": {
-    "url": "https://github.com/muiro/ninja_turtes/issues"
+    "url": "https://github.com/muiro/ninja_turtles/issues"
   },
-  "homepage": "https://github.com/muiro/ninja_turtes",
+  "homepage": "https://github.com/muiro/ninja_turtles",
   "dependencies": {
     "body-parser": "^1.12.2",
     "chai": "^2.2.0",
