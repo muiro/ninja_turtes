@@ -197,7 +197,7 @@ describe("ninja_turtles", function(){
 			for (var i = 0; i < 20; i++) {
 				var message = {
 					uuid: UUID.v4(),
-					message: "/messages GET test message " + i
+					message: "get_messages() test message " + i
 				};
 				app.log_message(message);
 				messages.push(message);
@@ -212,7 +212,29 @@ describe("ninja_turtles", function(){
 			done();
 		});
 
-		it("should return a certain number of unread messages if number and computer id specified");
+		it("should return a certain number of unread messages if number and computer id specified", function(done){
+			app.purge_messages();
+			var messages = [];
+			for (var i = 0; i < 20; i++) {
+				var message = {
+					uuid: UUID.v4(),
+					computer_id: 11,
+					computer_label: 'Test get_messages()',
+					message: "get_messages() test message " + i
+				};
+				app.log_message(message);
+				messages.push(message);
+			}
+
+			while (messages.length > 5) {
+				messages.shift();
+			}
+
+			var result = app.get_messages(5, 12);
+			expect(result).to.deep.equal(messages);
+
+			done();
+		});
 
 		it("should mark the messages as read by the requesting computer", function(done){
 			app.purge_messages();
@@ -261,7 +283,43 @@ describe("ninja_turtles", function(){
 			done();
 		});
 
-		it("should return fewer than the number of specified messages if number and computer id passed but there exist fewer unread messages than specified");
+		it("should return fewer than the number of specified messages if number and computer id passed but there exist fewer unread messages than specified", function(done){
+			app.purge_messages();
+			var messages = [];
+			for (var i = 0; i < 20; i++) {
+				var computer_id = 0;
+				if (i % 2 == 0) {
+					computer_id = 11;
+				} else {
+					computer_id = 12;
+				}
+				var message = {
+					uuid: UUID.v4(),
+					computer_id: computer_id,
+					computer_label: 'Test get_messages()',
+					message: "get_messages() test message " + i
+				};
+				app.log_message(message);
+				messages.push(message);
+			}
+
+			messages = messages.filter(function(element){
+				if (element.computer_id == 11) {
+					return true;
+				} else {
+					return false;
+				}
+			});
+
+			while (messages.length > 5) {
+				messages.shift();
+			}
+
+			var result = app.get_messages(5, 12);
+			expect(result).to.deep.equal(messages);
+
+			done();
+		});
 	});
 
 	describe("#log_message()", function(){
