@@ -119,15 +119,6 @@ function purge_messages() {
 
 function get_messages(number, computer_id) {
 	try {
-		// if (number == null || number == undefined) {
-			// return messages.slice(0);
-		// } else {
-			// var this_messages = messages.slice(0);
-			// while (this_messages.length > number) {
-			// 	this_messages.shift();
-			// }
-			// return this_messages;
-		// }
 		if (computer_id != null && computer_id != undefined) {
 			var unread_messages = messages.filter(function(element, index){
 				var read = read_messages[index].read;
