@@ -100,6 +100,7 @@ function fix_cc_message(message) {
 }
 
 function log_message(message) {
+	logger.debug(message);
 	messages.push(message);
 	read_messages.push({uuid: message.uuid, read:[message.computer_id]});
 	while (messages.length > message_limit) {
