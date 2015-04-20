@@ -8,6 +8,10 @@ var app = require(__dirname + '/../index.js');
 
 describe("ninja_turtles", function(){
 
+	beforeEach(function(){
+		app.purge_messages();
+	});
+
 	describe("#fix_cc_message()", function(){
 		it("should parse ComputerCraft HTTP API messages", function(done){
 			var message = {
@@ -30,7 +34,6 @@ describe("ninja_turtles", function(){
 
 	describe("#get_message()", function(){
 		it("should return a message by uuid", function(done){
-			app.purge_messages();
 			var uuid = UUID.v4();
 			var message = {
 				uuid: uuid,
@@ -43,7 +46,6 @@ describe("ninja_turtles", function(){
 		});
 
 		it("should return null if no message by that uuid exists", function(done){
-			app.purge_messages();
 			var uuid = UUID.v4();
 			var result = app.get_message(uuid);
 			expect(result).to.equal(null);
@@ -51,7 +53,6 @@ describe("ninja_turtles", function(){
 		});
 
 		it("should mark a message as read when a uuid is passed", function(done){
-			app.purge_messages();
 			var uuid = UUID.v4();
 			var message = {
 				uuid: uuid,
@@ -67,7 +68,6 @@ describe("ninja_turtles", function(){
 		});
 
 		it("should return the oldest unread message if no uuid is passed", function(done){
-			app.purge_messages();
 			var uuid = UUID.v4();
 			var uuid2 = UUID.v4();
 			var message11 = {
@@ -90,14 +90,12 @@ describe("ninja_turtles", function(){
 		});
 
 		it("should return null if there are no unread messages if no uuid is passed", function(done){
-			app.purge_messages();
 			var result = app.get_message(null, 12);
 			expect(result).to.equal(null);
 			done();
 		});
 
 		it("should mark the message as read by the requesting computer", function(done){
-			app.purge_messages();
 			var uuid = UUID.v4();
 			var message = {
 				uuid: uuid,
@@ -113,7 +111,6 @@ describe("ninja_turtles", function(){
 		});
 
 		it("should mark the message as read by additional computers that read it", function(done){
-			app.purge_messages();
 			var uuid = UUID.v4();
 			var message = {
 				uuid: uuid,
@@ -130,7 +127,6 @@ describe("ninja_turtles", function(){
 		});
 
 		it("should not re-add a reader that already exists on a message's read queue", function(done){
-			app.purge_messages();
 			var uuid = UUID.v4();
 			var message = {
 				uuid: uuid,
@@ -147,7 +143,6 @@ describe("ninja_turtles", function(){
 		});
 
 		it("should not mark a message as read if no computer_id is passed", function(done){
-			app.purge_messages();
 			var uuid = UUID.v4();
 			var message = {
 				uuid: uuid,
@@ -172,9 +167,28 @@ describe("ninja_turtles", function(){
 		});
 	});
 
+	describe("#get_all_messages()", function(){
+		it("should return the entire message queue", function(done){
+			var messages = [];
+			for (var i = 0; i < 20; i++) {
+				var message = {
+					message: 'Test message ' + i,
+					uuid: UUID.v4(),
+					computer_id: i,
+					computer_label: 'label ' + i
+				};
+				messages.push(message);
+				app.log_message(message);
+			}
+
+			var result = app.get_all_messages();
+			expect(result).to.deep.equal(messages);
+			done();
+		});
+	});
+
 	describe("#get_messages()", function(){
 		it("should return all messages from the queue if no number or computer id is specified", function(done){
-			app.purge_messages();
 			var messages = [];
 			for (var i = 0; i < 20; i++) {
 				var message = {
@@ -192,7 +206,6 @@ describe("ninja_turtles", function(){
 		});
 
 		it("should return a certain number of messages if specified and with no computer id", function(done){
-			app.purge_messages();
 			var messages = [];
 			for (var i = 0; i < 20; i++) {
 				var message = {
@@ -213,7 +226,6 @@ describe("ninja_turtles", function(){
 		});
 
 		it("should return a certain number of unread messages if number and computer id specified", function(done){
-			app.purge_messages();
 			var messages = [];
 			for (var i = 0; i < 20; i++) {
 				var message = {
@@ -237,7 +249,6 @@ describe("ninja_turtles", function(){
 		});
 
 		it("should mark the messages as read by the requesting computer", function(done){
-			app.purge_messages();
 			var uuid11 = UUID.v4();
 			var uuid12 = UUID.v4();
 			var message11 = {
@@ -261,7 +272,6 @@ describe("ninja_turtles", function(){
 		});
 
 		it("should not return messages already read by the computer", function(done){
-			app.purge_messages();
 			var uuid11 = UUID.v4();
 			var uuid12 = UUID.v4();
 			var message11 = {
@@ -284,7 +294,6 @@ describe("ninja_turtles", function(){
 		});
 
 		it("should return fewer than the number of specified messages if number and computer id passed but there exist fewer unread messages than specified", function(done){
-			app.purge_messages();
 			var messages = [];
 			for (var i = 0; i < 20; i++) {
 				var computer_id = 0;
@@ -324,14 +333,12 @@ describe("ninja_turtles", function(){
 
 	describe("#log_message()", function(){
 		it("should accept a message and place it in the messages queue", function(done){
-			app.purge_messages();
 			app.log_message("test");
 			expect(app.get_messages()).to.deep.equal(['test']);
 			done();
 		});
 
 		it("should add a second message to the queue", function(done){
-			app.purge_messages();
 			app.log_message("test");
 			app.log_message("test2");
 			expect(app.get_messages()).to.deep.equal(['test', 'test2']);
@@ -339,7 +346,6 @@ describe("ninja_turtles", function(){
 		});
 
 		it("should only keep " + app.message_limit + " messages in the queue", function(done){
-			app.purge_messages();
 			var messages = [];
 			for (var i = 0; i < app.message_limit + 10; i++) {
 				app.log_message("test " + i);
@@ -353,7 +359,6 @@ describe("ninja_turtles", function(){
 		});
 
 		it("should instantiate the read_messages[] element for the message", function(){
-			app.purge_messages();
 			var uuid = UUID.v4();
 			var message = {
 				uuid: uuid,
@@ -366,7 +371,6 @@ describe("ninja_turtles", function(){
 		});
 
 		it("should only keep " + app.message_limit + " messages in the read_messages[] array", function(){
-			app.purge_messages();
 			for (var i = 0; i < app.message_limit + 2; i++) {
 				var uuid = UUID.v4();
 				var message = {
@@ -382,7 +386,6 @@ describe("ninja_turtles", function(){
 		});
 
 		it("should mark the message as read by the posting computer", function(){
-			app.purge_messages();
 			var uuid = UUID.v4();
 			var message = {
 				uuid: uuid,
@@ -397,7 +400,6 @@ describe("ninja_turtles", function(){
 
 	describe("#purge_messages()", function(){
 		it("should blank out the messages queue", function(done){
-			app.purge_messages();
 			app.log_message("test");
 			app.purge_messages();
 			expect(app.get_messages()).to.deep.equal([]);
@@ -405,7 +407,6 @@ describe("ninja_turtles", function(){
 		});
 
 		it("should blank out the read messages queue", function(){
-			app.purge_messages();
 			app.log_message("test");
 			app.purge_messages();
 			expect(app.get_read()).to.deep.equal([]);
@@ -444,22 +445,24 @@ describe("ninja_turtles", function(){
 				});
 
 				it("should add new messages to the message queue", function(done){
-					app.purge_messages();
 					var message = {
-						'{"message":"test message2"}': ''
+						uuid: UUID.v4(),
+						message: 'Test message 2',
+						computer_id: 11,
+						computer_label: 'Test Label'
 					};
+					var cc_message = make_cc_message(message);
 					request("http://localhost:3000")
 					.post("/api/message")
-					.send(message)
+					.send(cc_message)
 					.end(function(err, res){
 						if (err) return done(err);
-						expect(app.get_messages()).to.deep.equal([{message: "test message2"}]);
+						expect(app.get_messages()).to.deep.equal([message]);
 						done();
 					});
 				});
 
 				it("should mark the message as read by the posting computer", function(done){
-					app.purge_messages();
 					var uuid = UUID.v4();
 					var message = {
 						uuid: uuid,
@@ -478,13 +481,47 @@ describe("ninja_turtles", function(){
 					});
 				});
 
-				it("should check for completeness of required fields in the request (comuter_id, computer_label, uuid, message) " + 
-					" and return an error if not all are present");
+				it("should check for the message field in the sent data and fail if not present, not adding the message to the queue", function(done){
+					var uuid = UUID.v4();
+					var message = {
+						uuid: uuid,
+						computer_label: 'Test',
+						computer_id: 11
+					};
+					message = make_cc_message(message);
+					request("http://localhost:3000")
+					.post("/api/message")
+					.send(message)
+					.end(function(err, res){
+						if (err) return done(err);
+						expect(res.body).to.deep.equal({status: 'error'});
+						expect(app.get_all_messages()).to.deep.equal([]);
+						done();
+					});
+				});
+
+				it("should check for completeness of required fields in the request (comuter_id, computer_label, uuid) " + 
+					" and set them if not present", function(done){
+						var message = {
+							message: 'Test Message'
+						};
+						message = make_cc_message(message);
+						request("http://localhost:3000")
+						.post("/api/message")
+						.send(message)
+						.end(function(err, res){
+							if (err) return done(err);
+							expect(res.body).to.deep.equal({status: 'ok'});
+							expect(app.get_all_messages()[0]).to.have.deep.property('uuid');
+							expect(app.get_all_messages()[0]).to.have.deep.property('computer_id');
+							expect(app.get_all_messages()[0]).to.have.deep.property('computer_label');
+							done();
+						});
+					});
 			});
 
 			describe("GET", function(){
 				it("should return a message by the specified uuid", function(done){
-					app.purge_messages();
 					var uuid = UUID.v4();
 					var message = {
 						uuid: uuid,
@@ -502,7 +539,6 @@ describe("ninja_turtles", function(){
 				});
 
 				it("should return an error if the message doesn't exist in the queue", function(done){
-					app.purge_messages();
 					var uuid = UUID.v4();
 					request("http://localhost:3000")
 					.get("/api/message/" + uuid)
@@ -514,19 +550,78 @@ describe("ninja_turtles", function(){
 					});
 				});
 
-				it("should accept a computer_id in the request object");
-				it("should return the oldest unread message for the computer id if no uuid specified");
-				it("should return {status: 'ok'} when there are no unread messages if no uuid is specified");
-				it("should mark the message as read by the requesting computer");
-				it("should check for completeness of required fields in the request (comuter_id) " + 
-					" and return an error if not all are present");
+				it("should return the oldest unread message for the computer id if no uuid specified", function(done){
+					var uuid = UUID.v4();
+					var uuid2 = UUID.v4();
+					var uuid3 = UUID.v4();
+					var message11 = {
+						uuid: uuid,
+						computer_label: 'Test 11',
+						computer_id: 11,
+						message: "test message 11"
+					};
+					var message12 = {
+						uuid: uuid2,
+						computer_label: 'Test 12',
+						computer_id: 12,
+						message: "test message 12"
+					};
+					var message13 = {
+						uuid: uuid3,
+						computer_label: 'Test 13',
+						computer_id: 13,
+						message: "test message 13"
+					};
+					app.log_message(message11);
+					app.log_message(message12);
+					app.log_message(message13);
+					request("http://localhost:3000")
+					.get("/api/message/?computer_id=11")
+					.send()
+					.end(function(err, res){
+						if (err) return done(err);
+						expect(res.body).to.deep.equal(message12);
+						done();
+					});
+				});
+
+				it("should return {status: 'ok'} when there are no unread messages if no uuid is specified", function(done){
+					request("http://localhost:3000")
+					.get("/api/message/?computer_id=11")
+					.send()
+					.end(function(err, res){
+						if (err) return done(err);
+						expect(res.body).to.deep.equal({status: 'ok'});
+						done();
+					});
+				});
+
+				it("should mark the message as read by the requesting computer", function(done){
+					var uuid = UUID.v4();
+					var message = {
+						uuid: uuid,
+						computer_id: 12,
+						computer_label: 'test',
+						message: 'test message'
+					};
+					app.log_message(message);
+					request("http://localhost:3000")
+					.get("/api/message/?computer_id=11")
+					.send()
+					.end(function(err, res){
+						if (err) return done(err);
+						var result = app.get_read();
+						expect(result).to.deep.equal([{uuid: uuid, read: [12, 11]}]);
+						done();
+					});
+
+				});
 			});
 		});
 
 		describe("/messages", function(){
 			describe("GET", function(){
-				it("should return all messages from the queue if no amount is specified", function(done){
-					app.purge_messages();
+				it("should return all messages from the queue if no amount or computer_id is specified", function(done){
 					var messages = [];
 					for (var i = 0; i < 20; i++) {
 						var message = {
@@ -547,8 +642,7 @@ describe("ninja_turtles", function(){
 					});
 				});
 
-				it("should return a certain number of messages if one is specified", function(done){
-					app.purge_messages();
+				it("should return a certain number of messages if one is specified but no computer_id", function(done){
 					var messages = [];
 					for (var i = 0; i < 20; i++) {
 						var message = {
@@ -573,10 +667,12 @@ describe("ninja_turtles", function(){
 					});
 				});
 
-				it("should mark the messages as ready by the requesting computer");
+				it("should return all unread messages if no amount specified but a computer_id is");
 
-				it("should check for completeness of required fields in the request (comuter_id) " + 
-					" and return an error if not all are present");
+				it("should return a certain number of unread messages if a number is specified and so is a computer_id");
+				it("should return fewer unread messages than specified if number and computer_id are passed but there are fewer unread than requested");
+				it("should mark the messages as ready by the requesting computer if a computer id is passed");
+				it("should return something informative if there are no messages to be read");
 			});
 		});
 

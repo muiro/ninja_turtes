@@ -25,10 +25,26 @@ app.post('/api/message', function(req, res){
 	logger.debug('Got a message!');
 	try {
 		var message = fix_cc_message(req.body);
-		if (message != null) {
+		var computer_id = req.query.computer_id;
+		if (message != null && message.hasOwnProperty('message')) {
+
+			if (!message.hasOwnProperty('uuid')) {
+				message.uuid = UUID.v4();
+			}
+
+			if (!message.hasOwnProperty('computer_id')) {
+				message.computer_id = 0;
+			}
+
+			if (!message.hasOwnProperty('computer_label')) {
+				message.computer_label = '';
+			}
+
 			log_message(message);
 			res.send({status: "ok"});
 		} else {
+			logger.debug("message not logged due to a null or incomplete messages");
+			logger.debug(message);
 			res.send({status: "error"});
 		}
 	} catch (error) {
@@ -40,12 +56,19 @@ app.post('/api/message', function(req, res){
 app.get('/api/message/:id?', function(req, res){
 	try {
 		logger.debug('Received a message get request!');
-		var this_message = get_message(req.params.id);
+		var computer_id = Number(req.query.computer_id);
+
+		var this_message = get_message(req.params.id, computer_id);
 		if (this_message != null) {
 			res.send(this_message);
 		} else {
-			res.send({status: 'error'});
+			if (req.params.id == null || req.params.id == undefined) {
+				res.send({status: 'ok'});
+			} else {
+				res.send({status: 'error'});
+			}
 		}
+
 	} catch (error) {
 		logger.error(error);
 		res.send({status: "error"});
@@ -224,6 +247,10 @@ function get_read() {
 	return read_messages.slice(0);
 }
 
+function get_all_messages() {
+	return messages.slice(0);
+}
+
 exports.fix_cc_message = fix_cc_message;
 exports.log_message = log_message;
 exports.get_messages = get_messages;
@@ -231,3 +258,4 @@ exports.purge_messages = purge_messages;
 exports.message_limit = message_limit;
 exports.get_message = get_message;
 exports.get_read = get_read;
+exports.get_all_messages = get_all_messages;
