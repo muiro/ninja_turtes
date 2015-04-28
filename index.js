@@ -7,6 +7,7 @@ var logger = logger = log4js.getLogger();
 var bodyParser = require('body-parser');
 var UUID = require('node-uuid');
 var moment = require('moment');
+var config = require('./config.json');
 
 if (process.env.NODE_ENV != 'test') {
 	logger.setLevel('DEBUG');
@@ -15,7 +16,7 @@ if (process.env.NODE_ENV != 'test') {
 }
 
 var messages = [];
-var message_limit = 100;
+var message_limit = config.message_limit;
 var read_messages = [];
 
 app.use(bodyParser.json());
@@ -79,12 +80,22 @@ app.get('/api/messages', function(req, res){
 	try {
 		logger.debug('Received a messages get request!');
 		var number = req.query.number;
+		var computer_id = Number(req.query.computer_id);
+
 		if (number) {
-			var this_messages = get_messages(number);
-			res.send(this_messages);
+			var this_messages = get_messages(number, computer_id);
+			if (this_messages == null) {
+				res.send({status: 'ok'});
+			} else {
+				res.send(this_messages);
+			}
 		} else {
-			var this_messages = get_messages();
-			res.send(this_messages);
+			var this_messages = get_messages(null, computer_id);
+			if (this_messages == null) {
+				res.send({status: 'ok'});
+			} else {
+				res.send(this_messages);
+			}
 		}
 	} catch (error) {
 		logger.error(error);
@@ -102,7 +113,7 @@ app.get("/api/time", function(req, res){
 	}
 });
 
-var server = app.listen(3000, function(){
+var server = app.listen(config.port, function(){
 	var host = server.address().address;
 	var port = server.address().port;
 

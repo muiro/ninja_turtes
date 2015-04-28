@@ -382,7 +382,7 @@ describe("ninja_turtles", function(){
 				app.log_message(message);
 			}
 			var result = app.get_read();
-			expect(result).to.have.length(100);
+			expect(result).to.have.length(app.message_limit);
 		});
 
 		it("should mark the message as read by the posting computer", function(){
@@ -667,12 +667,124 @@ describe("ninja_turtles", function(){
 					});
 				});
 
-				it("should return all unread messages if no amount specified but a computer_id is");
+				it("should return all unread messages if no amount specified but a computer_id is", function(done){
+					var messages = [];
+					for (var i = 0; i < 20; i++) {
+						var message = {
+							uuid: UUID.v4(),
+							message: 'test message ' + i,
+							computer_id: 0,
+							computer_label: 'test label ' + i
+						};
+					 	if (i % 2 == 0) {
+					 		message.computer_id = 11;
+					 	} else {
+					 		message.computer_id = 12;
+					 		messages.push(message);
+					 	}
+					 	app.log_message(message);
+					}
+					request("http://localhost:3000")
+					.get("/api/messages?computer_id=11")
+					.send()
+					.end(function(err, res){
+						if (err) return done(err);
+						expect(res.body).to.deep.equal(messages);
+						done();
+					});
+				});
 
-				it("should return a certain number of unread messages if a number is specified and so is a computer_id");
-				it("should return fewer unread messages than specified if number and computer_id are passed but there are fewer unread than requested");
-				it("should mark the messages as ready by the requesting computer if a computer id is passed");
-				it("should return something informative if there are no messages to be read");
+				it("should return a certain number of unread messages if a number is specified and so is a computer_id", function(done){
+					var messages = [];
+					for (var i = 0; i < 20; i++) {
+						var message = {
+							uuid: UUID.v4(),
+							message: 'test message ' + i,
+							computer_id: 0,
+							computer_label: 'test label ' + i
+						};
+					 	if (i % 2 == 0) {
+					 		message.computer_id = 11;
+					 	} else {
+					 		message.computer_id = 12;
+					 		messages.push(message);
+					 	}
+					 	app.log_message(message);
+					}
+
+					while (messages.length > 5) {
+						messages.shift();
+					}
+
+					request("http://localhost:3000")
+					.get("/api/messages?computer_id=11&number=5")
+					.send()
+					.end(function(err, res){
+						if (err) return done(err);
+						expect(res.body).to.deep.equal(messages);
+						done();
+					});
+				});
+
+				it("should return fewer unread messages than specified if number and computer_id are passed but there are fewer unread than requested", function(done){
+					var messages = [];
+					for (var i = 0; i < 20; i++) {
+						var message = {
+							uuid: UUID.v4(),
+							message: 'test message ' + i,
+							computer_id: 0,
+							computer_label: 'test label ' + i
+						};
+					 	if (i % 2 == 0) {
+					 		message.computer_id = 11;
+					 	} else {
+					 		message.computer_id = 12;
+					 		messages.push(message);
+					 	}
+					 	app.log_message(message);
+					}
+
+					request("http://localhost:3000")
+					.get("/api/messages?computer_id=11&number=20")
+					.send()
+					.end(function(err, res){
+						if (err) return done(err);
+						expect(res.body).to.deep.equal(messages);
+						done();
+					});
+				});
+
+				it("should mark the messages as ready by the requesting computer if a computer id is passed", function(done){
+					var message = {
+						uuid: UUID.v4(),
+						computer_id: 12,
+						computer_label: 'test label',
+						message: 'test message'
+					};
+					app.log_message(message);
+
+					request("http://localhost:3000")
+					.get("/api/messages?computer_id=11")
+					.send()
+					.end(function(err, res){
+						if (err) return done(err);
+						var result = app.get_read();
+						expect(result).to.deep.equal([{uuid: message.uuid, read: [12, 11]}]);
+						done();
+					});
+				});
+
+				it("should return something informative if there are no messages to be read", function(done){
+					request("http://localhost:3000")
+					.get("/api/messages?computer_id=11")
+					.send()
+					.end(function(err, res){
+						if (err) return done(err);
+						var result = app.get_read();
+						expect(res.body).to.deep.equal({status: 'ok'});
+						done();
+					});
+				});
 			});
 		});
 
